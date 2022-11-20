@@ -1,8 +1,10 @@
 package me.harry;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class JSONHandler {
@@ -71,9 +73,9 @@ public class JSONHandler {
         return object;
     }
 
-    public JsonObject MessageListResponse(List messages) {
+    public JsonObject MessageListResponse(JsonArray messages) {
         JsonObject object = GetObject("MessageListResponse");
-        object.add("messages", new Gson().toJsonTree(messages));
+        object.add("messages", messages);
         return object;
     }
 }
