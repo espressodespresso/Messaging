@@ -6,49 +6,12 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
 import java.io.*;
-import java.net.ConnectException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
 public class Client {
-
-    /*public static void main(String[] args) {
-        int port = 12345;
-        String hostName = "localhost";
-        Scanner input = new Scanner(System.in);
-
-        try
-        {
-            Socket client = new Socket(hostName, port);
-            PrintWriter writer = new PrintWriter(
-                    client.getOutputStream(), true
-            );
-            BufferedReader reader = new BufferedReader(new InputStreamReader(
-                    client.getInputStream()
-            ));
-
-            String inputLine;
-            System.out.println("Send a message to the server.");
-            while((inputLine = input.nextLine())!=null)
-            {
-                writer.println(inputLine);
-                String echo = reader.readLine();
-                if(echo==null)
-                    break;
-                System.out.println("Echo : " + echo);
-            }
-            client.close();
-        }catch(IOException ie)
-        {
-            System.out.println(ie.getMessage());
-        }
-
-        input.close();
-
-    }*/
-
     private String hostName = "localhost";
     private int portNumber = 12345;
     private Scanner input = new Scanner(System.in);
@@ -161,14 +124,6 @@ public class Client {
                             } else {
                                 writer.println(jsonHandler.PublishRequest(currentChannel, jsonHandler.Message(username, 0, inputString)));
                             }
-
-
-
-                            //char[] array = inputString.toCharArray();
-                            /*writer.println(jsonHandler.PublishRequest(currentChannel, jsonHandler.Message(username, 0, inputString)));*/
-                            //writer.println(jsonHandler.GetRequest(username, 0));
-                            /*writer.println(inputString);
-                            System.out.println(inputString);*/
                         }
                     }
                 }

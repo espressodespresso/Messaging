@@ -9,7 +9,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Scanner;
 
 public class ClientHandler extends Thread {
 
@@ -94,12 +93,6 @@ public class ClientHandler extends Thread {
                     }
                     default: break;
                 }
-                //System.out.println(object.get("identity").getAsString());
-
-                /*System.out.println("Receieved : " + inputString);
-                for (ClientHandler client : clients) {
-                    client.writer.println(inputString);
-                }*/
             }
 
             GetWriter().println("Goodbye");
@@ -109,10 +102,8 @@ public class ClientHandler extends Thread {
             reader.close();
             System.out.println("Server -> Client disconnected");
 
-        } catch (IOException io) {
-
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+        } catch (IOException | InterruptedException io) {
+            throw new RuntimeException(io);
         }
     }
 

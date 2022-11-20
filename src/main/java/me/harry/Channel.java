@@ -6,7 +6,6 @@ import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 
 public class Channel {
     private String name;
@@ -39,19 +38,7 @@ public class Channel {
         return true;
     }
 
-    /*public void Publish(String publisher, String message) {
-        for (ClientHandler client : connected) {
-            client.GetWriter().println(publisher + " : " + message);
-        }
-    }*/
-
     public JsonArray Get(int after) {
-        /*ArrayList<String> messages = new ArrayList<>();
-        for (Long wasd: messageHistory.keySet()) {
-            if(wasd > after) {
-                messages.add(messageHistory.get(wasd));
-            }
-        }*/
         JsonArray messages = new JsonArray();
         for (Long wasd: messageHistory.keySet()) {
             if(wasd > after) {
@@ -64,16 +51,11 @@ public class Channel {
 
     public void Publish(JsonObject object) {
         String body = object.get("body").getAsString();
-        //String message = name + " | *" + object.get("from").getAsString() + " : " + body;
         String message = "*" + object.get("from").getAsString() + " | " + name + " : " + body;
         for (ClientHandler client: connected) {
             client.GetWriter().println(message);
         }
 
         messageHistory.put(new Date().getTime(), body);
-        /*System.out.println("Receieved : " + inputString);
-                for (ClientHandler client : clients) {
-                    client.writer.println(inputString);
-                }*/
     }
 }

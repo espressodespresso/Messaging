@@ -2,10 +2,7 @@ package me.harry;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Scanner;
 
 public class Server {
 
@@ -30,7 +27,6 @@ public class Server {
         while(true) {
             ClientHandler clientHandler = new ClientHandler(serverSocket.accept(), clients, channels);
             clientHandler.start();
-            //new ClientHandler((Socket) serverSocket.accept()).start();
             System.out.println("Server -> New client connected");
         }
     }
