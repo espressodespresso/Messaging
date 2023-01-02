@@ -5,7 +5,7 @@ import com.google.gson.JsonObject;
 
 public class JSONHandler {
 
-    private JsonObject GetObject(String _class) {
+    public JsonObject GetObject(String _class) {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("_class", _class);
         return jsonObject;

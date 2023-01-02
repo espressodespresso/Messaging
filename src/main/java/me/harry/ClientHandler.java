@@ -18,6 +18,7 @@ public class ClientHandler extends Thread {
     private ArrayList<ClientHandler> clients;
     private ArrayList<Channel> channels;
     private JSONHandler jsonHandler = new JSONHandler();
+    private String identity;
 
     public ClientHandler(Socket socket, ArrayList<ClientHandler> clients, ArrayList<Channel> channels) throws IOException {
         client = socket;
@@ -25,33 +26,48 @@ public class ClientHandler extends Thread {
         reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
         this.clients = clients;
         this.channels = channels;
+        start();
     }
 
     public void run() {
         try {
             String inputString;
-            while((inputString = reader.readLine()) != null) {
+            while ((inputString = reader.readLine()) != null) {
                 System.out.println(inputString);
                 JsonObject object = new Gson().fromJson(inputString, JsonObject.class);
                 switch (object.get("_class").getAsString()) {
                     case "OpenRequest": {
-                        Channel channel = new Channel(object.get("identity").getAsString());
-                        channel.Subscribe(this);
-                        channels.add(channel);
+                        identity = object.get("identity").getAsString();
+                        boolean exists = false;
+                        for (Channel channel : channels) {
+                            if(channel.GetName().equals(identity)) {
+                                exists = true;
+                                channel.Subscribe(this);
+                                for (String message: channel.GetMessagesHashMap().values()) {
+                                    GetWriter().println(message);
+                                }
+                                break;
+                            }
+                        }
+                        if(!exists) {
+                            Channel channel = new Channel(identity);
+                            channel.Subscribe(this);
+                            channels.add(channel);
+                        }
                         GetWriter().println(jsonHandler.SuccessResponse());
                         break;
                     }
                     case "PublishRequest": {
                         Boolean located = false;
-                        for (Channel channel: channels) {
-                            if(channel.GetName().equals(object.get("identity").getAsString())) {
+                        for (Channel channel : channels) {
+                            if (channel.GetName().equals(identity)) {
                                 channel.Publish(object.get("message").getAsJsonObject());
                                 GetWriter().println(jsonHandler.SuccessResponse());
                                 located = true;
                                 break;
                             }
                         }
-                        if(!located) {
+                        if (!located) {
                             GetWriter().println(jsonHandler.ErrorResponse("Error occurred, try again!"));
                         }
                         break;
@@ -59,7 +75,7 @@ public class ClientHandler extends Thread {
                     case "SubscribeRequest": {
                         String channelName = object.get("channel").getAsString();
                         Channel channel = Exists(channelName);
-                        if(channel != null) {
+                        if (channel != null) {
                             if (channel.Subscribe(this)) {
                                 GetWriter().println(jsonHandler.SuccessResponse());
                             } else {
@@ -70,11 +86,11 @@ public class ClientHandler extends Thread {
                         }
                         break;
                     }
-                    case "UnsubcribeRequest": {
+                    case "UnsubscribeRequest": {
                         String channelName = object.get("channel").getAsString();
                         Channel channel = Exists(channelName);
-                        if(channel != null) {
-                            if(channel.Unsubscribe(this)) {
+                        if (channel != null) {
+                            if (channel.Unsubscribe(this)) {
                                 GetWriter().println(jsonHandler.SuccessResponse());
                             } else {
                                 GetWriter().println(jsonHandler.ErrorResponse("You are not subscribed to this channel"));
@@ -85,23 +101,34 @@ public class ClientHandler extends Thread {
                         break;
                     }
                     case "GetRequest": {
-                        for (Channel channel: channels) {
-                            if(channel.GetName().equals(object.get("identity").getAsString())) {
+                        for (Channel channel : channels) {
+                            if (channel.GetName().equals(identity)) {
                                 GetWriter().println(jsonHandler.MessageListResponse(channel.Get(object.get("after").getAsInt())));
                             }
                         }
                     }
-                    default: break;
+                    default:
+                        break;
                 }
             }
 
-            GetWriter().println("Goodbye");
+            // Removing user data & terminating socket/threads correctly when disconnecting
             Thread.sleep(1000);
+            System.out.println("Server -> Client disconnected");
+            Channel channel = Exists(identity);
+            if (channel != null) {
+                for (ClientHandler clientHandler : channel.GetConnected()) {
+                    if (clientHandler != this) {
+                        channel.Unsubscribe(clientHandler);
+                    }
+                }
+            }
+            clients.remove(this);
             client.close();
             writer.close();
             reader.close();
-            System.out.println("Server -> Client disconnected");
-
+            // Deprecated method, shows an error in certain IDE's but should not stop program running
+            this.stop();
         } catch (IOException | InterruptedException io) {
             throw new RuntimeException(io);
         }
@@ -112,13 +139,13 @@ public class ClientHandler extends Thread {
     }
 
     public Channel Exists(String channelName) {
-        Channel foundChannel = null;
         for (Channel channel : channels) {
+            GetWriter().println(channel.GetName());
             if(channel.GetName().equals(channelName)) {
-                foundChannel = channel;
+                return channel;
             }
         }
 
-        return foundChannel;
+        return null;
     }
 }

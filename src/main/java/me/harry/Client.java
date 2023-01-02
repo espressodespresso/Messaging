@@ -1,11 +1,9 @@
 package me.harry;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.*;
 
 import java.io.*;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,10 +23,11 @@ public class Client {
     private Interface definedMessage = new Interface();
 
 
-    public static void main( String[] args )
-    {
+    public static void main(String[] args) {
         try {
             new Client();
+        } catch (ConnectException ex) {
+            System.out.println("Unable to connect to server... (" + ex.getMessage() + ")");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -38,7 +37,6 @@ public class Client {
         client = new Socket(hostName, portNumber);
         writer = new PrintWriter(client.getOutputStream(), true);
         reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
-
         System.out.println("Enter your name :");
         username = input.nextLine();
         writer.println(jsonHandler.OpenRequest(username));
@@ -46,6 +44,7 @@ public class Client {
         System.out.println("Opened channel " + username + "...");
         subscribed.add(username);
         System.out.println(definedMessage.WelcomeMessage());
+
         Thread readerThread = new Thread(
                 new Runnable() {
                     @Override
@@ -53,7 +52,7 @@ public class Client {
                         while (true) {
                             try {
                                 String echo = reader.readLine();
-                                if(echo != null) {
+                                if (echo != null) {
                                     try {
                                         JsonObject object = new Gson().fromJson(echo, JsonObject.class);
                                         switch (object.get("_class").getAsString()) {
@@ -67,11 +66,12 @@ public class Client {
                                             }
                                             case "MessageListResponse": {
                                                 JsonArray array = object.get("messages").getAsJsonArray();
-                                                if(!array.isEmpty()) {
+                                                if (!array.isEmpty()) {
                                                     System.out.println("Server -> Retrieved requested messages...");
-                                                    for(int i =0; i < object.size(); i++) {
+                                                    System.out.println(array);
+                                                    /*for(int i =0; i < object.size() - 1; i++) {
                                                         System.out.println(array.get(i).getAsString());
-                                                    }
+                                                    }*/
                                                 } else {
                                                     System.out.println("Server -> No messages found at timestamp");
                                                 }
@@ -97,29 +97,45 @@ public class Client {
                         String inputString;
                         while ((inputString = input.nextLine()) != null) {
                             char[] inputArray = inputString.toCharArray();
-                            if(inputArray[0] == ':') {
+                            if (inputArray[0] == ':') {
                                 String[] splitInput = inputString.split(" ");
-                                switch (splitInput[0].toLowerCase()) {
-                                    case ":subscribe": {
-                                        String channelName = splitInput[1];
-                                        writer.println(jsonHandler.SubscibeRequest(username, channelName));
-                                        currentChannel = channelName;
-                                        break;
+                                try {
+                                    switch (splitInput[0].toLowerCase()) {
+                                        case ":subscribe": {
+                                            String channelName = splitInput[1];
+                                            writer.println(jsonHandler.SubscibeRequest(username, channelName));
+                                            currentChannel = channelName;
+                                            break;
+                                        }
+                                        case ":unsubscribe": {
+                                            String channelName = splitInput[1];
+                                            writer.println(jsonHandler.UnsubscibeRequest(username, channelName));
+                                            currentChannel = channelName;
+                                            break;
+                                        }
+                                        case ":channels":
+                                            System.out.println("Available Channels");
+                                            try {
+                                                JsonObject object = JsonParser.parseReader(new FileReader("ChannelData.json")).getAsJsonObject();
+                                                JsonArray array = object.get("Channels").getAsJsonArray();
+                                                for (JsonElement element: array) {
+                                                    System.out.println(" - " + element.getAsString());
+                                                }
+                                            } catch (FileNotFoundException ex) {
+                                                throw new RuntimeException(ex);
+                                            }
+                                            break;
+                                        case ":get":
+                                            writer.println(jsonHandler.GetRequest(username, Integer.parseInt(splitInput[1])));
+                                            break;
+                                        case ":quit":
+                                            System.exit(1);
+                                        case ":help":
+                                            System.out.println(definedMessage.HelpMenu());
+                                            break;
                                     }
-                                    case ":unsubscribe": {
-                                        String channelName = splitInput[1];
-                                        writer.println(jsonHandler.UnsubscibeRequest(username, channelName));
-                                        currentChannel = channelName;
-                                        break;
-                                    }
-                                    case ":get":
-                                        writer.println(jsonHandler.GetRequest(username, Integer.parseInt(splitInput[1])));
-                                        break;
-                                    case ":quit":
-                                        System.exit(1);
-                                    case ":help":
-                                        System.out.println(definedMessage.HelpMenu());
-                                        break;
+                                } catch (ArrayIndexOutOfBoundsException ex) {
+                                    System.out.println("Invalid input, enter :help to show available commands");
                                 }
                             } else {
                                 writer.println(jsonHandler.PublishRequest(currentChannel, jsonHandler.Message(username, 0, inputString)));
