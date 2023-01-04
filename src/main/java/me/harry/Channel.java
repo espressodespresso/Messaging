@@ -1,5 +1,6 @@
 package me.harry;
 
+import com.google.common.base.Stopwatch;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 
 public class Channel {
     private String name;
@@ -54,22 +56,24 @@ public class Channel {
     public JsonArray Get(int after) {
         JsonArray messages = new JsonArray();
         for (Long time: messageHistory.keySet()) {
-            if(time > after) {
-                messages.add("Time : " + time.intValue() + " -> " + messageHistory.get(time));
+            int minutes = (int) ((time/1000)/60);
+            if(minutes >= after) {
+                messages.add("Time : " + minutes + " -> " + messageHistory.get(time));
             }
         }
 
         return messages;
     }
 
-    public void Publish(JsonObject object) {
+    public void Publish(JsonObject object, Stopwatch stopwatch) {
         String body = object.get("body").getAsString();
-        String message = "*" + object.get("from").getAsString() + " | " + name + " : " + body;
+        //String message = "*" + object.get("from").getAsString() + " | " + name + " : " + body;
+        String message = "(" + name + ") " + object.get("from").getAsString() + " : " + body;
         for (ClientHandler client: connected) {
-            client.GetWriter().println(message);
+            client.GetWriter().println(stopwatch.elapsed(TimeUnit.MINUTES)+ " | " + message);
         }
 
-        messageHistory.put(new Date().getTime(), message);
+        messageHistory.put(stopwatch.elapsed(TimeUnit.MILLISECONDS), message);
     }
 
     private void SaveLocal(String channelName) {
@@ -95,9 +99,9 @@ public class Channel {
         }
     }
 
-    public ArrayList<ClientHandler> GetConnected() {
+    protected ArrayList<ClientHandler> GetConnected() {
         return connected;
     }
 
-    public HashMap<Long, String> GetMessagesHashMap() { return messageHistory; }
+    protected HashMap<Long, String> GetMessagesHashMap() { return messageHistory; }
 }

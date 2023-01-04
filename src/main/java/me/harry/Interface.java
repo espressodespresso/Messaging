@@ -9,24 +9,39 @@ public class Interface {
                 ------------------------------------------------------------
                 |                         Welcome                          |
                 ------------------------------------------------------------
-                | For more information, use the help command -> :help      |
+                | For more information, use the help command -> :menu      |
                 ------------------------------------------------------------     
                 """;
     }
 
-    public String HelpMenu() {
+    public String MenuCommand() {
         return """
                 ------------------------------------------------------------
                 | To use any commands, use : before the command e.g. :help |
                 ------------------------------------------------------------
                 |                    Avaliable Commands                    |
                 |                                                          |
+                |  *  :channels                  - Shows the available     |
+                |                                  channels                |
                 |  *  :subscribe (channelname)   - Joins a new channel     |
                 |  *  :unsubscribe (channelname) - Leaves a channel        |
-                |  *  :get                       - Retrieves all messages  |
-                |                                  you have published      |
+                |  *  :subscribed                - Shows the channels you  |
+                |                                  are subscribed to       |
+                |  *  :current                   - Gets the current /      |
+                |                                  active channel          |
+                |  *  :select (channelname)      - Selects the current /   |
+                |                                  active channel ( if     |
+                |                                  subscribed to )         |
+                |  *  :get (servertime)          - Retrieves all messages  |
+                |                                  from the channel        |
+                |  *  :search (keywords)         - Searches subscribed     |
+                |                                  channels for messages   | 
+                |                                  containing the keywords |
                 |  *  :quit                      - Closes the program      |
-                |  *  :help                      - You are here now        |
+                |  *  :menu                      - You are here now        |
+                |                                                          |
+                |  * Chat Format *                                         |
+                |  Type -> ServerTime | (Channel) Username : Message       |
                 |                                                          |
                 ------------------------------------------------------------
                 """;

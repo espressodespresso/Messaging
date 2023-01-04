@@ -1,5 +1,6 @@
 package me.harry;
 
+import com.google.common.base.Stopwatch;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
@@ -9,23 +10,27 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 public class ClientHandler extends Thread {
 
-    private Socket client;
-    private PrintWriter writer;
-    private BufferedReader reader;
+    private final Socket client;
+    private final PrintWriter writer;
+    private final BufferedReader reader;
     private ArrayList<ClientHandler> clients;
     private ArrayList<Channel> channels;
-    private JSONHandler jsonHandler = new JSONHandler();
+    private Stopwatch stopwatch;
+    private final JSONHandler jsonHandler = new JSONHandler();
     private String identity;
 
-    public ClientHandler(Socket socket, ArrayList<ClientHandler> clients, ArrayList<Channel> channels) throws IOException {
+    public ClientHandler(Socket socket, ArrayList<ClientHandler> clients
+            , ArrayList<Channel> channels, Stopwatch stopwatch) throws IOException {
         client = socket;
         writer = new PrintWriter(client.getOutputStream(), true);
         reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
         this.clients = clients;
         this.channels = channels;
+        this.stopwatch = stopwatch;
         start();
     }
 
@@ -35,9 +40,9 @@ public class ClientHandler extends Thread {
             while ((inputString = reader.readLine()) != null) {
                 System.out.println(inputString);
                 JsonObject object = new Gson().fromJson(inputString, JsonObject.class);
+                identity = object.get("identity").getAsString();
                 switch (object.get("_class").getAsString()) {
                     case "OpenRequest": {
-                        identity = object.get("identity").getAsString();
                         boolean exists = false;
                         for (Channel channel : channels) {
                             if(channel.GetName().equals(identity)) {
@@ -58,10 +63,10 @@ public class ClientHandler extends Thread {
                         break;
                     }
                     case "PublishRequest": {
-                        Boolean located = false;
+                        boolean located = false;
                         for (Channel channel : channels) {
                             if (channel.GetName().equals(identity)) {
-                                channel.Publish(object.get("message").getAsJsonObject());
+                                channel.Publish(object.get("message").getAsJsonObject(), stopwatch);
                                 GetWriter().println(jsonHandler.SuccessResponse());
                                 located = true;
                                 break;
@@ -134,13 +139,12 @@ public class ClientHandler extends Thread {
         }
     }
 
-    public PrintWriter GetWriter() {
+    protected PrintWriter GetWriter() {
         return writer;
     }
 
-    public Channel Exists(String channelName) {
+    private Channel Exists(String channelName) {
         for (Channel channel : channels) {
-            GetWriter().println(channel.GetName());
             if(channel.GetName().equals(channelName)) {
                 return channel;
             }

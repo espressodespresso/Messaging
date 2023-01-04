@@ -1,5 +1,6 @@
 package me.harry;
 
+import com.google.common.base.Stopwatch;
 import com.google.gson.*;
 
 import java.io.*;
@@ -8,7 +9,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Server {
-    private ArrayList<ClientHandler> clients = new ArrayList<>();
     private ArrayList<Channel> channels = new ArrayList<>() {};
 
     public static void main( String[] args )
@@ -27,9 +27,11 @@ public class Server {
         Runtime.getRuntime().addShutdownHook(new ShutdownThead(channels));
         //channelHandler.start();
         System.out.println("Server started! Now listening on port " + port + "...");
+        Stopwatch stopwatch = Stopwatch.createStarted();
 
         while(true) {
-            ClientHandler clientHandler = new ClientHandler(serverSocket.accept(), clients, channels);
+            ArrayList<ClientHandler> clients = new ArrayList<>();
+            ClientHandler clientHandler = new ClientHandler(serverSocket.accept(), clients, channels, stopwatch);
             //clientHandler.start();
             clients.add(clientHandler);
             System.out.println("Server -> New client connected");
@@ -67,6 +69,7 @@ public class Server {
                 Channel channel = new Channel(channelName, messageHistory);
                 channels.add(channel);
             }
+            new File("temp.json").delete();
         } catch (FileNotFoundException ex) {
             System.out.println("WARNING : Unable to get message data (No Data?), ignoring...");
         }
@@ -93,6 +96,7 @@ class ShutdownThead extends Thread {
             new Gson().toJson(object, writer);
             writer.flush();
             writer.close();
+            new File("ChannelData.json").delete();
         } catch (IOException e) {
             System.out.println("Fatal Error occured, contact developer...");
             throw new RuntimeException(e);
