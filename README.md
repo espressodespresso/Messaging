@@ -11,8 +11,9 @@ enter the information you wish to send, without the use of ':'
 * :current                   - Gets the active / current channel
 * :select (channelname)      - Selects the active / current channel (if subscribed to)
 * :get                       - Retrieves all messages you have published
+* :search (keywords)         - Searches subscribed channel for messages containing the keywords entered
 * :quit                      - Closes the program
-* :help                      - Displays commands
+* :menu                      - Displays commands
 
 ## Requirements
 * Java 15 or above (JDK 19 Recommended)
